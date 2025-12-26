@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <title>Finision v1 | Osobní finanční kalkulačka</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #020617;
+            --bg-elevated: #020b2a;
+            --bg-elevated-soft: rgba(15, 23, 42, 0.85);
+            --bg-card: #020b2a;
+            --border-subtle: rgba(148, 163, 184, 0.15);
+            --accent: #4f46e5;
+            --accent-soft: rgba(79, 70, 229, 0.15);
+            --accent-strong: #818cf8;
+            --accent-warning: #eab308;
+            --accent-warning-soft: rgba(234, 179, 8, 0.2);
+            --text: #e5e7eb;
+            --text-muted: #94a3b8;
+            --danger: #fb7185;
+            --danger-soft: rgba(248, 113, 113, 0.16);
+            --success: #22c55e;
+            --success-soft: rgba(34, 197, 94, 0.16);
+            --info-soft: rgba(56, 189, 248, 0.18);
+            --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.9);
+            --radius-card: 18px;
+            --radius-pill: 999px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at top, #020617 0, #000 55%, #020617 100%);
+            min-height: 100%;
+        }
+
+        body {
+            padding: 16px;
+        }
+
+        .app-shell {
+            max-width: 1400px;
+            margin: 0 auto 48px auto;
+        }
+
+        header.app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px 16px 20px;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand-title {
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: var(--accent-strong);
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        nav.app-nav {
+            display: flex;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .nav-pill {
+            border-radius: 999px;
+            padding: 6px 12px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .nav-pill.active {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(79, 70, 229, 0.5);
+            color: #eef2ff;
+        }
+
+        .nav-pill:hover {
+            border-color: rgba(148, 163, 184, 0.5);
+            color: var(--text);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #020617 0, #020b2a 40%, #020617 100%);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+            padding: 18px 20px 20px 20px;
+        }
+
+        .card + .card {
+            margin-top: 4px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .card-kicker {
+            font-size: 0.75rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--accent-strong);
+        }
+
+        .card-description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .section-columns {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+            gap: 18px;
+        }
+
+        .subsection-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .subsection-help {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .rows {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) 110px minmax(0, 1.1fr) 70px 34px;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .row.expense-row {
+            grid-template-columns: minmax(0, 1.2fr) 114px 130px minmax(0, 1.1fr) 70px 34px;
+        }
+
+        .row.saving-row {
+            grid-template-columns: minmax(0, 1.5fr) 120px minmax(0, 1.1fr) 34px;
+        }
+
+        .input, .select {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 9px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            padding: 7px 9px;
+            font-size: 0.85rem;
+            color: var(--text);
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .input::placeholder {
+            color: rgba(148, 163, 184, 0.6);
+        }
+
+        .input:focus, .select:focus {
+            border-color: rgba(129, 140, 248, 0.9);
+            box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.7);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .select {
+            appearance: none;
+            padding-right: 24px;
+            background-image:
+                linear-gradient(45deg, transparent 50%, #9ca3af 50%),
+                linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+            background-position:
+                calc(100% - 14px) 12px,
+                calc(100% - 9px) 12px;
+            background-size: 5px 5px, 5px 5px;
+            background-repeat: no-repeat;
+        }
+
+        .btn {
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--text);
+            font-size: 0.82rem;
+            padding: 7px 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-ghost {
+            border-color: rgba(148, 163, 184, 0.5);
+            color: var(--text-muted);
+        }
+
+        .btn-ghost:hover {
+            border-color: rgba(148, 163, 184, 0.85);
+            color: var(--text);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .btn-primary {
+            background: radial-gradient(circle at top left, #6366f1 0, #4f46e5 35%, #4338ca 100%);
+            color: #e5e7eb;
+            padding-inline: 18px;
+            border: none;
+            box-shadow: 0 18px 40px rgba(67, 56, 202, 0.7);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+            box-shadow: 0 20px 48px rgba(67, 56, 202, 0.85);
+        }
+
+        .btn-danger {
+            background: rgba(248, 113, 113, 0.18);
+            color: var(--danger);
+            border-color: rgba(248, 113, 113, 0.5);
+        }
+
+        .btn-danger:hover {
+            background: rgba(248, 113, 113, 0.25);
+        }
+
+        .icon-button {
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            transition: 0.2s ease;
+        }
+
+        .icon-button:hover {
+            border-color: rgba(248, 113, 113, 0.9);
+            color: var(--danger);
+            background: rgba(15, 23, 42, 1);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            border: 1px solid transparent;
+        }
+
+        .badge-soft {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: rgba(148, 163, 184, 0.45);
+            color: var(--text-muted);
+        }
+
+        .badge-success {
+            background: var(--success-soft);
+            border-color: rgba(34, 197, 94, 0.7);
+            color: #bbf7d0;
+        }
+
+        .badge-danger {
+            background: var(--danger-soft);
+            border-color: rgba(248, 113, 113, 0.8);
+            color: #fecaca;
+        }
+
+        .badge-warning {
+            background: var(--accent-warning-soft);
+            border-color: rgba(234, 179, 8, 0.8);
+            color: #facc15;
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .summary-card {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 14px;
+            padding: 10px 12px 11px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .summary-card.highlight-positive {
+            border-color: rgba(34, 197, 94, 0.7);
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.15), rgba(15, 23, 42, 0.9));
+        }
+
+        .summary-card.highlight-negative {
+            border-color: rgba(248, 113, 113, 0.75);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(15, 23, 42, 0.9));
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .summary-value {
+            margin-top: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .summary-sub {
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .summary-badge-row {
+            margin-top: 8px;
+        }
+
+        .summary-badge-row .badge {
+            font-size: 0.72rem;
+        }
+
+        .pill-group {
+            display: inline-flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            color: var(--text-muted);
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.9);
+            transition: 0.16s;
+        }
+
+        .pill.active {
+            border-color: rgba(129, 140, 248, 0.95);
+            color: #c7d2fe;
+            background: rgba(79, 70, 229, 0.25);
+        }
+
+        .pill:hover {
+            border-color: rgba(129, 140, 248, 0.8);
+            color: #e5e7eb;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+
+        thead {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        th, td {
+            padding: 7px 10px;
+            border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+            text-align: left;
+        }
+
+        th {
+            font-weight: 500;
+            color: #9ca3af;
+            font-size: 0.78rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .row-income {
+            color: var(--success);
+        }
+
+        .row-expense {
+            color: var(--danger);
+        }
+
+        .row-saving {
+            color: var(--accent-warning);
+        }
+
+        .row-remaining {
+            color: var(--accent-strong);
+        }
+
+        .calendar-container {
+            margin-top: 10px;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 4px;
+            margin-bottom: 4px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .calendar-header div {
+            text-align: center;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 4px;
+        }
+
+        .day-cell {
+            min-height: 64px;
+            border-radius: 10px;
+            padding: 5px 6px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(30, 64, 175, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.76rem;
+            transition: 0.16s ease;
+        }
+
+        .day-cell.empty {
+            border-style: dashed;
+            border-color: rgba(30, 41, 59, 0.9);
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .day-cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-number {
+            font-weight: 600;
+        }
+
+        .day-type-badge {
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: var(--text-muted);
+        }
+
+        .day-amount {
+            margin-top: 6px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .day-cell.weekend {
+            background: radial-gradient(circle at top, rgba(129, 140, 248, 0.4) 0, rgba(15, 23, 42, 0.9) 60%);
+            border-color: rgba(129, 140, 248, 0.9);
+        }
+
+        .day-cell:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.85);
+        }
+
+        .floating-recalc {
+            position: fixed;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .floating-recalc button {
+            padding-inline: 20px;
+            padding-block: 10px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+        }
+
+        .floating-recalc button .icon {
+            font-size: 1rem;
+        }
+
+        .floating-recalc button {
+            animation: floatPulse 2.4s infinite;
+        }
+
+        @keyframes floatPulse {
+            0% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.8); transform: translateY(-50%) scale(1); }
+            40% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); transform: translateY(-52%) scale(1.02); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); transform: translateY(-50%) scale(1); }
+        }
+
+        .flash-update {
+            animation: flashUpdate 0.6s ease-out;
+        }
+
+        @keyframes flashUpdate {
+            from { background-color: rgba(129, 140, 248, 0.28); }
+            to { background-color: transparent; }
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--accent-strong);
+        }
+
+        .status-pill.positive {
+            border-color: rgba(34, 197, 94, 0.8);
+            color: #bbf7d0;
+        }
+
+        .status-pill.positive .status-dot {
+            background: var(--success);
+        }
+
+        .status-pill.negative {
+            border-color: rgba(248, 113, 113, 0.8);
+            color: #fecaca;
+        }
+
+        .status-pill.negative .status-dot {
+            background: var(--danger);
+        }
+
+        .stats-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.4fr);
+            gap: 16px;
+        }
+
+        .chart-container {
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 14px;
+            border: 1px solid rgba(30, 64, 175, 0.8);
+            padding: 10px 12px;
+        }
+
+        .chart-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+
+        .chart-controls label {
+            color: var(--text-muted);
+        }
+
+        .chart-controls select {
+            min-width: 165px;
+        }
+
+        .chart-legend-note {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .tracker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .tracker-card {
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 14px;
+            padding: 10px 12px;
+            border: 1px solid rgba(30, 64, 175, 0.8);
+            font-size: 0.82rem;
+        }
+
+        .tracker-card .label {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        .tracker-card .value {
+            margin-top: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .tracker-card .sub {
+            margin-top: 4px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .tracker-card.positive {
+            border-color: rgba(34, 197, 94, 0.85);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(15, 23, 42, 0.95));
+        }
+
+        .tracker-card.negative {
+            border-color: rgba(248, 113, 113, 0.85);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(15, 23, 42, 0.95));
+        }
+
+        .transactions-table {
+            margin-top: 6px;
+        }
+
+        .transactions-table tbody tr:hover td {
+            background: rgba(30, 64, 175, 0.18);
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .section-columns {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .stats-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .tracker-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .floating-recalc {
+                right: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header.app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .floating-recalc {
+                top: auto;
+                bottom: 12px;
+                right: 50%;
+                transform: translateX(50%);
+                animation: floatPulseMobile 2.4s infinite;
+            }
+
+            .floating-recalc button {
+                padding-inline: 16px;
+            }
+
+            @keyframes floatPulseMobile {
+                0% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.7); transform: translateX(50%) translateY(0) scale(1); }
+                40% { box-shadow: 0 0 0 14px rgba(79, 70, 229, 0); transform: translateX(50%) translateY(-1px) scale(1.02); }
+                100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); transform: translateX(50%) translateY(0) scale(1); }
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-title">FINISION v1</div>
+            <div class="brand-subtitle">Osobní kalkulačka příjmů, výdajů, spoření a kapesného</div>
+        </div>
+        <nav class="app-nav">
+            <button class="nav-pill active" data-scroll-to="section-basic">Základní kalkulace</button>
+            <button class="nav-pill" data-scroll-to="section-savings">Spoření &amp; investice</button>
+            <button class="nav-pill" data-scroll-to="section-pocket">Systém vlastní výplaty</button>
+            <button class="nav-pill" data-scroll-to="section-calendar">Mapa po dnech</button>
+            <button class="nav-pill" data-scroll-to="section-stats">Statistiky</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Základní část – příjmy a výdaje -->
+        <section id="section-basic" class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-kicker">ZÁKLADNÍ ČÁST</div>
+                    <div class="card-title">Příjmy a výdaje</div>
+                </div>
+                <div class="card-description">
+                    Nejprve nastav příjmy a výdaje. Frekvence se automaticky přepočte na měsíční částky.
+                </div>
+            </div>
+
+            <div class="section-columns">
+                <div>
+                    <!-- Incomes -->
+                    <div class="subsection">
+                        <div class="subsection-title">Příjmy</div>
+                        <div class="subsection-help">
+                            U každého příjmu zvol, jestli je částka <strong>měsíčně, týdně, denně nebo jen v pracovních dnech / o víkendu</strong>.
+                            Enter v částce rovnou přepočítá plán a u posledního příjmu přidá nový řádek.
+                        </div>
+                        <div class="rows" id="income-rows">
+                            <!-- Incomes will be injected -->
+                        </div>
+                        <button class="btn btn-ghost" id="btn-add-income">
+                            + Přidat příjem
+                        </button>
+                    </div>
+
+                    <!-- Expenses -->
+                    <div class="subsection" style="margin-top:16px;">
+                        <div class="subsection-title">Výdaje</div>
+                        <div class="subsection-help">
+                            Částka je vždy za jednu jednotku:
+                            <strong>týdně</strong> = 1× týdně,
+                            <strong>pracovní dny</strong> = 5× týdně (Po–Pá),
+                            <strong>víkend</strong> = 2× týdně (So+Ne).
+                            Typ výdaje:
+                            <strong>Trvalé</strong> (nájem, pojistky, spoření…) nebo
+                            <strong>Plovoucí</strong> – kapesné (benzín, jídlo, obědy…). Systém tak simuluje vlastní výplatu.
+                        </div>
+                        <div class="rows" id="expense-rows">
+                            <!-- Expenses will be injected -->
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:4px;">
+                            <button class="btn btn-ghost" id="btn-add-expense">+ Přidat výdaj</button>
+                            <button class="btn btn-ghost" id="btn-add-typical-expenses">+ Přidat typické výdaje</button>
+                        </div>
+                        <div class="helper-text">
+                            Po zadání příjmů a výdajů klikni na „Spočítat / aktualizovat plán“ vpravo.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary on right -->
+                <div>
+                    <div class="subsection">
+                        <div class="subsection-title">Shrnutí měsíčního plánu</div>
+                        <div class="subsection-help">
+                            Pracuje s přepočtenými měsíčními částkami. Později se doplní o spoření a kapesné.
+                        </div>
+
+                        <div class="summary-grid" style="margin-top:6px;">
+                            <div class="summary-card" id="card-income-total">
+                                <div class="summary-label">Příjem / měsíc (součet)</div>
+                                <div class="summary-value" id="summary-income">0 Kč</div>
+                                <div class="summary-sub" id="summary-income-count">Zatím žádné příjmy.</div>
+                            </div>
+                            <div class="summary-card" id="card-expense-total">
+                                <div class="summary-label">Výdaje / měsíc (přepočet)</div>
+                                <div class="summary-value" id="summary-expenses">0 Kč</div>
+                                <div class="summary-sub" id="summary-expenses-breakdown">Trvalé 0 Kč • Plovoucí 0 Kč</div>
+                            </div>
+                            <div class="summary-card" id="card-before-savings">
+                                <div class="summary-label">Mezivýsledek před spořením</div>
+                                <div class="summary-value" id="summary-before-savings">0 Kč</div>
+                                <div class="summary-sub" id="summary-before-savings-perc">Podíl z příjmu: –</div>
+                            </div>
+                            <div class="summary-card" id="card-status">
+                                <div class="summary-label">Stav základní kalkulace</div>
+                                <div class="summary-value" id="summary-status-text">Zatím neznámý</div>
+                                <div class="summary-badge-row">
+                                    <span class="status-pill" id="summary-status-pill">
+                                        <span class="status-dot"></span>
+                                        <span>Čekám na výpočet…</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="helper-text" style="margin-top:10px;">
+                            Základní část je hotová ve chvíli, kdy dává smysl poměr příjmů a výdajů. Další sekce navážou na tento mezivýsledek.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rozšířená část – spoření / investice -->
+        <section id="section-savings" class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-kicker">ROZŠÍŘENÁ ČÁST</div>
+                    <div class="card-title">Spoření / investice (měsíčně)</div>
+                </div>
+                <div class="card-description">
+                    Spoření může být automatické podle procent z příjmu nebo ručně zadané položky. Všechno se bere jako dlouhodobá rezerva.
+                </div>
+            </div>
+
+            <div class="section-columns">
+                <div>
+                    <div class="subsection-title">Mezivýsledek po výdajích</div>
+                    <div class="subsection-help">
+                        Maximální možná částka, kterou lze rozumně posílat na spoření / investice, vychází ze základní kalkulace.
+                    </div>
+
+                    <div class="summary-grid" style="margin-top:6px;">
+                        <div class="summary-card">
+                            <div class="summary-label">Max. na spoření (před nastavením)</div>
+                            <div class="summary-value" id="summary-max-savings">0 Kč</div>
+                            <div class="summary-sub">= příjem – výdaje</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Aktuální spoření / měsíc</div>
+                            <div class="summary-value" id="summary-current-savings">0 Kč</div>
+                            <div class="summary-sub" id="summary-current-savings-perc">Podíl z příjmu: –</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Zbývá po všech spořeních</div>
+                            <div class="summary-value" id="summary-after-savings">0 Kč</div>
+                            <div class="summary-sub" id="summary-after-savings-perc">Zůstává na život: –</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Rychlá orientace</div>
+                            <div class="summary-value" id="summary-savings-status">Čekám na výpočet…</div>
+                            <div class="summary-sub">
+                                Pro začátek se většinou osvědčí spořit 5–15 % čistého příjmu.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subsection" style="margin-top:18px;">
+                        <div class="subsection-title">Návrhy spoření</div>
+                        <div class="subsection-help">
+                            Vyber procento z příjmu nebo zadej vlastní částku. Kalkulačka hlídá, abys se nevešel do mínusu.
+                        </div>
+                        <div class="pill-group" id="saving-presets">
+                            <button type="button" class="pill" data-saving-percent="0.05">5 % z příjmu</button>
+                            <button type="button" class="pill" data-saving-percent="0.10">10 %</button>
+                            <button type="button" class="pill" data-saving-percent="0.15">15 %</button>
+                            <button type="button" class="pill" data-saving-percent="0.20">20 %</button>
+                            <button type="button" class="pill" data-saving-percent="0.30">30 %</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1.5fr); gap:8px; margin-top:8px;">
+                            <div>
+                                <label class="summary-label">Vlastní spoření / měsíc</label>
+                                <input id="input-custom-savings" class="input" placeholder="např. 5000" inputmode="decimal" />
+                                <div class="helper-text">
+                                    Enter částku přepíše návrhy výše. Částka je součástí celkového spoření.
+                                </div>
+                            </div>
+                            <div>
+                                <label class="summary-label">Mezivýsledek spoření</label>
+                                <div class="summary-card" style="margin-top:4px;">
+                                    <div class="summary-sub">Podíl z příjmu:</div>
+                                    <div class="summary-value" id="summary-custom-savings-perc">–</div>
+                                    <div class="summary-sub" style="margin-top:6px;">Zbývá po spoření:</div>
+                                    <div class="summary-value" id="summary-after-custom-savings">0 Kč</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom saving items + table -->
+                <div>
+                    <div class="subsection">
+                        <div class="subsection-title">Spoření / investice – vlastní položky</div>
+                        <div class="subsection-help">
+                            Každá položka může být měsíční, týdenní nebo denní. Enter v částce přidá nový řádek a přepočítá plán.
+                        </div>
+                        <div class="rows" id="saving-rows">
+                            <!-- rows injected -->
+                        </div>
+                        <button class="btn btn-ghost" id="btn-add-saving">+ Přidat položku spoření</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailní část – systém vlastní výplaty & hlídač kapesného -->
+        <section id="section-pocket" class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-kicker">DETAILNÍ ČÁST</div>
+                    <div class="card-title">Systém vlastní výplaty &amp; hlídač kapesného</div>
+                </div>
+                <div class="card-description">
+                    Do kapesného patří výdaje označené jako <strong>Plovoucí</strong> (benzín, jídlo, obědy, drobné nákupy…).
+                    Trvalé platby (nájem, pojištění, spoření) označ <strong>Trvalé</strong>. Z toho vznikne doporučená týdenní „výplata pro sebe“.
+                </div>
+            </div>
+
+            <div class="tracker-grid">
+                <div class="tracker-card">
+                    <div class="label">Plovoucí výdaje / měsíc (plánované)</div>
+                    <div class="value" id="pocket-monthly">0 Kč</div>
+                    <div class="sub" id="pocket-monthly-share">Podíl z příjmu: –</div>
+                </div>
+                <div class="tracker-card">
+                    <div class="label">Doporučené kapesné / týden</div>
+                    <div class="value" id="pocket-weekly">0 Kč</div>
+                    <div class="sub" id="pocket-weekly-source">podle plovoucích výdajů</div>
+                </div>
+                <div class="tracker-card">
+                    <div class="label">Doporučené kapesné / den</div>
+                    <div class="value" id="pocket-daily">0 Kč</div>
+                    <div class="sub">průměr za měsíc</div>
+                </div>
+                <div class="tracker-card positive">
+                    <div class="label">Připravený rozpočet nového týdne</div>
+                    <div class="value" id="pocket-next-budget">0 Kč</div>
+                    <div class="sub">nastaví se z kalkulačky</div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-bottom:14px;">
+                <button class="btn btn-ghost" id="btn-pocket-load-from-plan">Načíst z kalkulačky</button>
+                <button class="btn btn-primary" id="btn-pocket-start-week">
+                    Start nového týdne
+                </button>
+            </div>
+
+            <div class="subsection-title">Aktuální týden – hlídač kapesného</div>
+            <div class="subsection-help">
+                Sleduje, kolik z týdenního kapesného už padlo. Vše se ukládá pouze v prohlížeči (localStorage, klíč <code>finision_pocket_v1</code>).
+            </div>
+
+            <div class="tracker-grid" style="margin-top:8px;">
+                <div class="tracker-card">
+                    <div class="label">Rozpočet týdne</div>
+                    <div class="value" id="tracker-budget">0 Kč</div>
+                </div>
+                <div class="tracker-card negative">
+                    <div class="label">Utraceno</div>
+                    <div class="value" id="tracker-spent">0 Kč</div>
+                </div>
+                <div class="tracker-card" id="tracker-remaining-card">
+                    <div class="label">Zbývá</div>
+                    <div class="value" id="tracker-remaining">0 Kč</div>
+                    <div class="sub" id="tracker-status-label">Čekám na nastavení týdne</div>
+                </div>
+                <div class="tracker-card">
+                    <div class="label">Počet transakcí</div>
+                    <div class="value" id="tracker-count">0</div>
+                </div>
+            </div>
+
+            <div class="subsection" style="margin-top:16px;">
+                <div class="subsection-title">Přidat transakci</div>
+                <div class="subsection-help">
+                    Zadávej jen platby, které jdou z kapesného (benzín, nákup, obědy…). Fixní platby sem nepatří.
+                </div>
+
+                <div style="display:grid; grid-template-columns: 150px 140px minmax(0,1.6fr) 140px 110px; gap:8px; margin-top:8px; align-items:flex-end;">
+                    <div>
+                        <label class="summary-label">Datum</label>
+                        <input type="date" class="input" id="tx-date" />
+                    </div>
+                    <div>
+                        <label class="summary-label">Kategorie</label>
+                        <select class="select" id="tx-category">
+                            <option>Benzín</option>
+                            <option>Jídlo</option>
+                            <option>Obědy</option>
+                            <option>Nákup</option>
+                            <option>Zábava</option>
+                            <option>Jiné</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="summary-label">Popis (volitelné)</label>
+                        <input class="input" id="tx-note" placeholder="např. kavárna, drogerie…" />
+                    </div>
+                    <div>
+                        <label class="summary-label">Částka (Kč)</label>
+                        <input class="input" id="tx-amount" placeholder="např. 150" inputmode="decimal" />
+                    </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn btn-primary" id="btn-add-tx">Přidat</button>
+                    </div>
+                </div>
+
+                <table class="transactions-table">
+                    <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Kategorie</th>
+                        <th>Popis</th>
+                        <th style="text-align:right;">Částka</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tx-table-body">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px 6px;">Zatím žádné transakce v aktuálním týdnu.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Rozšířená kalkulace – mapa po dnech (skutečný kalendář) -->
+        <section id="section-calendar" class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-kicker">ROZŠÍŘENÁ KALKULACE</div>
+                    <div class="card-title">Mapa po dnech (měsíční kalendář)</div>
+                </div>
+                <div class="card-description">
+                    Pracuje se zbytkem po spoření. Rozpočítává doporučenou částku na týden, pracovní den a víkendový den a ukazuje ji v kalendáři.
+                </div>
+            </div>
+
+            <div class="section-columns">
+                <div>
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <div class="summary-label">Zbývá po spoření (měsíc)</div>
+                            <div class="summary-value" id="cal-left-month">0 Kč</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Doporučený limit na týden</div>
+                            <div class="summary-value" id="cal-week-limit">0 Kč</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Pracovní den (Po–Pá)</div>
+                            <div class="summary-value" id="cal-workday">0 Kč</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">Víkendový den (So–Ne)</div>
+                            <div class="summary-value" id="cal-weekend">0 Kč</div>
+                        </div>
+                    </div>
+
+                    <div class="helper-text" style="margin-top:10px;">
+                        Kalendář níže používá stejné limity. Výsledná čísla jsou orientační – mají dát rámec, kolik si můžeš dovolit utratit v jednotlivých dnech.
+                    </div>
+                </div>
+
+                <div>
+                    <div class="subsection-title">Měsíc a rok</div>
+                    <div class="subsection-help">
+                        Změň měsíc nebo rok a mapa se přepočítá. Pracovní dny a víkendy se rozlišují automaticky.
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+                        <select id="cal-month" class="select" style="max-width:190px;">
+                            <option value="0">Leden</option>
+                            <option value="1">Únor</option>
+                            <option value="2">Březen</option>
+                            <option value="3">Duben</option>
+                            <option value="4">Květen</option>
+                            <option value="5">Červen</option>
+                            <option value="6">Červenec</option>
+                            <option value="7">Srpen</option>
+                            <option value="8">Září</option>
+                            <option value="9">Říjen</option>
+                            <option value="10">Listopad</option>
+                            <option value="11">Prosinec</option>
+                        </select>
+                        <input id="cal-year" class="input" style="max-width:110px;" type="number" min="2020" max="2100" />
+                        <button class="btn btn-ghost" id="btn-cal-today">Dnešní měsíc</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <div>Po</div>
+                    <div>Út</div>
+                    <div>St</div>
+                    <div>Čt</div>
+                    <div>Pá</div>
+                    <div>So</div>
+                    <div>Ne</div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- cells rendered by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistiky – graf a rozpad výdajů -->
+        <section id="section-stats" class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-kicker">STATISTIKY</div>
+                    <div class="card-title">Graf &amp; rozpad výdajů</div>
+                </div>
+                <div class="card-description">
+                    Kombinovaný graf ukazuje příjem jako sloupec a výdaje, spoření i zbytek jako spojnicové křivky. Hodnoty vychází z aktuálního měsíčního plánu.
+                </div>
+            </div>
+
+            <div class="stats-layout">
+                <div class="chart-container">
+                    <div class="chart-controls">
+                        <div>
+                            <label for="chart-type">Typ grafu</label><br />
+                            <select id="chart-type" class="select">
+                                <option value="combined">Kombinovaný (sloupec + čáry)</option>
+                                <option value="bar">Pouze sloupcový</option>
+                                <option value="line">Pouze spojnicový</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="chart-scale">Časové měřítko</label><br />
+                            <select id="chart-scale" class="select">
+                                <option value="month">Měsíc</option>
+                                <option value="year">Rok (12 měsíců)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="main-chart" height="170"></canvas>
+                    <div class="chart-legend-note">
+                        Legenda je vpravo. Zelená = příjem, červená = výdaje, žlutá = spoření, modrá = co zbývá.
+                    </div>
+                </div>
+
+                <div>
+                    <div class="subsection-title">Rozpad výdajů a souhrn</div>
+                    <div class="subsection-help">
+                        Přehled podle typu. Barvy řádků: zelená = příjem, červená = výdaje, žlutá = spoření, modrá = zbytek.
+                    </div>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Název</th>
+                            <th>Frekvence</th>
+                            <th>Typ</th>
+                            <th>Částka (jednotka)</th>
+                            <th>Přepočet / měsíc</th>
+                            <th>Podíl z příjmu</th>
+                        </tr>
+                        </thead>
+                        <tbody id="breakdown-table-body">
+                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px 6px;">Zatím žádná data – nejdřív spusť výpočet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Floating recalc button -->
+<div class="floating-recalc">
+    <button class="btn btn-primary" id="btn-recalc-floating">
+        <span class="icon">⚡</span>
+        <span>Spočítat / aktualizovat plán</span>
+    </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    // ---------- Util funkce ----------
+    const FREQUENCY_FACTORS = {
+        'mesicne': 1,
+        'tydne': 52 / 12,
+        'denne': 365 / 12,
+        'pracovni': (5 * 52) / 12,
+        'vikend': (2 * 52) / 12
+    };
+
+    function parseNumber(input) {
+        if (!input) return 0;
+        if (typeof input !== 'string') return isFinite(input) ? Number(input) : 0;
+        let cleaned = input.replace(/[^0-9,.-]/g, '').replace(',', '.');
+        let value = parseFloat(cleaned);
+        return isFinite(value) ? value : 0;
+    }
+
+    function formatNumberCZ(value) {
+        if (!isFinite(value)) return '';
+        const fixed = value.toFixed(2);
+        const parts = fixed.split('.');
+        parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' ');
+        return parts.join(',');
+    }
+
+    function formatCZK(value) {
+        if (!isFinite(value)) value = 0;
+        return formatNumberCZ(value) + ' Kč';
+    }
+
+    function animateFlash(el) {
+        if (!el) return;
+        el.classList.remove('flash-update');
+        // Force reflow
+        void el.offsetWidth;
+        el.classList.add('flash-update');
+    }
+
+    function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+    }
+
+    // ---------- DOM helpers ----------
+    const incomeContainer = document.getElementById('income-rows');
+    const expenseContainer = document.getElementById('expense-rows');
+    const savingContainer = document.getElementById('saving-rows');
+
+    let incomeRowId = 0;
+    let expenseRowId = 0;
+    let savingRowId = 0;
+
+    function createIncomeRow(name = 'Práce', freq = 'mesicne', amount = '') {
+        const id = ++incomeRowId;
+        const row = document.createElement('div');
+        row.className = 'row income-row';
+        row.dataset.id = id;
+
+        row.innerHTML = `
+            <input class="input income-name" placeholder="Název (např. práce)" value="${name}" />
+            <select class="select income-frequency">
+                <option value="mesicne"${freq === 'mesicne' ? ' selected' : ''}>měsíčně</option>
+                <option value="tydne"${freq === 'tydne' ? ' selected' : ''}>týdně</option>
+                <option value="denne"${freq === 'denne' ? ' selected' : ''}>denně</option>
+                <option value="pracovni"${freq === 'pracovni' ? ' selected' : ''}>pracovní dny (Po–Pá)</option>
+                <option value="vikend"${freq === 'vikend' ? ' selected' : ''}>víkend (So+Ne)</option>
+            </select>
+            <input class="input income-amount" placeholder="Částka" inputmode="decimal" value="${amount}" />
+            <div style="font-size:0.8rem; color:var(--text-muted);">Kč / jednotku</div>
+            <button class="icon-button income-remove" title="Odstranit příjem">×</button>
+        `;
+
+        incomeContainer.appendChild(row);
+        wireAmountFormatting(row.querySelector('.income-amount'));
+        row.querySelector('.income-amount').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                recalcAll();
+                const isLast = row === incomeContainer.lastElementChild;
+                if (isLast) createIncomeRow('', 'mesicne', '');
+            }
+        });
+        row.querySelector('.income-remove').addEventListener('click', () => {
+            row.remove();
+            recalcAll();
+        });
+    }
+
+    function createExpenseRow(name = 'Benzín', freq = 'tydne', type = 'plovouci', amount = '') {
+        const id = ++expenseRowId;
+        const row = document.createElement('div');
+        row.className = 'row expense-row';
+        row.dataset.id = id;
+
+        row.innerHTML = `
+            <input class="input exp-name" placeholder="Název (např. nájem, benzín…)" value="${name}" />
+            <select class="select exp-frequency">
+                <option value="mesicne"${freq === 'mesicne' ? ' selected' : ''}>měsíčně</option>
+                <option value="tydne"${freq === 'tydne' ? ' selected' : ''}>týdně</option>
+                <option value="denne"${freq === 'denne' ? ' selected' : ''}>denně</option>
+                <option value="pracovni"${freq === 'pracovni' ? ' selected' : ''}>pracovní dny (Po–Pá)</option>
+                <option value="vikend"${freq === 'vikend' ? ' selected' : ''}>víkend (So+Ne)</option>
+            </select>
+            <select class="select exp-type">
+                <option value="trvale"${type === 'trvale' ? ' selected' : ''}>Trvalé</option>
+                <option value="plovouci"${type === 'plovouci' ? ' selected' : ''}>Plovoucí (kapesné)</option>
+            </select>
+            <input class="input exp-amount" placeholder="Částka" inputmode="decimal" value="${amount}" />
+            <div style="font-size:0.8rem; color:var(--text-muted);">Kč / jednotku</div>
+            <button class="icon-button exp-remove" title="Odstranit výdaj">×</button>
+        `;
+
+        expenseContainer.appendChild(row);
+        wireAmountFormatting(row.querySelector('.exp-amount'));
+        row.querySelector('.exp-amount').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                recalcAll();
+                const isLast = row === expenseContainer.lastElementChild;
+                if (isLast) createExpenseRow('', 'mesicne', 'plovouci', '');
+            }
+        });
+        row.querySelector('.exp-remove').addEventListener('click', () => {
+            row.remove();
+            recalcAll();
+        });
+    }
+
+    function createSavingRow(name = 'Investice ETF', freq = 'mesicne', amount = '') {
+        const id = ++savingRowId;
+        const row = document.createElement('div');
+        row.className = 'row saving-row';
+        row.dataset.id = id;
+
+        row.innerHTML = `
+            <input class="input save-name" placeholder="Název (např. ETF, rezerva…)" value="${name}" />
+            <select class="select save-frequency">
+                <option value="mesicne"${freq === 'mesicne' ? ' selected' : ''}>měsíčně</option>
+                <option value="tydne"${freq === 'tydne' ? ' selected' : ''}>týdně</option>
+                <option value="denne"${freq === 'denne' ? ' selected' : ''}>denně</option>
+            </select>
+            <input class="input save-amount" placeholder="Částka" inputmode="decimal" value="${amount}" />
+            <button class="icon-button save-remove" title="Odstranit položku">×</button>
+        `;
+
+        savingContainer.appendChild(row);
+        wireAmountFormatting(row.querySelector('.save-amount'));
+        row.querySelector('.save-amount').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                recalcAll();
+                const isLast = row === savingContainer.lastElementChild;
+                if (isLast) createSavingRow('', 'mesicne', '');
+            }
+        });
+        row.querySelector('.save-remove').addEventListener('click', () => {
+            row.remove();
+            recalcAll();
+        });
+    }
+
+    function wireAmountFormatting(input) {
+        if (!input) return;
+        input.addEventListener('blur', () => {
+            const raw = parseNumber(input.value);
+            if (!raw) {
+                input.value = '';
+                return;
+            }
+            input.value = formatNumberCZ(raw);
+        });
+    }
+
+    // ---------- Počáteční řádky ----------
+    createIncomeRow('Práce', 'mesicne', '40000');
+    createExpenseRow('Benzín', 'tydne', 'plovouci', '800');
+    createExpenseRow('Jídlo', 'tydne', 'plovouci', '1500');
+    createExpenseRow('Obědy', 'pracovni', 'plovouci', '145');
+    createSavingRow('', 'mesicne', '');
+
+    document.getElementById('btn-add-income').addEventListener('click', () => createIncomeRow('', 'mesicne', ''));
+    document.getElementById('btn-add-expense').addEventListener('click', () => createExpenseRow('', 'mesicne', 'plovouci', ''));
+    document.getElementById('btn-add-typical-expenses').addEventListener('click', () => {
+        createExpenseRow('Nájem', 'mesicne', 'trvale', '15000');
+        createExpenseRow('Pojištění', 'mesicne', 'trvale', '2500');
+        createExpenseRow('Předplatné', 'mesicne', 'trvale', '600');
+        recalcAll();
+    });
+    document.getElementById('btn-add-saving').addEventListener('click', () => createSavingRow('', 'mesicne', ''));
+
+    // ---------- Spořicí preset tlačítka ----------
+    document.querySelectorAll('#saving-presets .pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#saving-presets .pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const percent = parseFloat(pill.dataset.savingPercent || '0');
+            const income = currentStats.incomeMonthly || 0;
+            const value = income * percent;
+            const input = document.getElementById('input-custom-savings');
+            input.value = value ? formatNumberCZ(value) : '';
+            recalcAll();
+        });
+    });
+
+    document.getElementById('input-custom-savings').addEventListener('blur', () => {
+        const v = parseNumber(document.getElementById('input-custom-savings').value);
+        document.getElementById('input-custom-savings').value = v ? formatNumberCZ(v) : '';
+    });
+    document.getElementById('input-custom-savings').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            recalcAll();
+        }
+    });
+
+    // ---------- Hlídač kapesného – localStorage ----------
+    const POCKET_STORAGE_KEY = 'finision_pocket_v1';
+
+    let pocketState = {
+        mode: 'weekly',
+        budget: 0,
+        spent: 0,
+        transactions: []
+    };
+
+    function loadPocketState() {
+        try {
+            const raw = localStorage.getItem(POCKET_STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                pocketState = Object.assign(pocketState, parsed || {});
+            }
+        } catch (e) {
+            console.warn('Pocket storage error', e);
+        }
+        renderPocketTracker();
+    }
+
+    function savePocketState() {
+        try {
+            localStorage.setItem(POCKET_STORAGE_KEY, JSON.stringify(pocketState));
+        } catch (e) {
+            console.warn('Pocket storage error', e);
+        }
+    }
+
+    document.getElementById('btn-pocket-load-from-plan').addEventListener('click', () => {
+        const weekly = currentStats.pocketWeekly || 0;
+        pocketState.budget = weekly;
+        pocketState.spent = 0;
+        pocketState.transactions = [];
+        renderPocketTracker();
+        savePocketState();
+    });
+
+    document.getElementById('btn-pocket-start-week').addEventListener('click', () => {
+        pocketState.budget = currentStats.pocketWeekly || 0;
+        pocketState.spent = 0;
+        pocketState.transactions = [];
+        renderPocketTracker();
+        savePocketState();
+    });
+
+    document.getElementById('btn-add-tx').addEventListener('click', () => {
+        const date = document.getElementById('tx-date').value || new Date().toISOString().slice(0, 10);
+        const category = document.getElementById('tx-category').value || 'Jiné';
+        const note = document.getElementById('tx-note').value || '';
+        const amountRaw = parseNumber(document.getElementById('tx-amount').value);
+        if (!amountRaw) return;
+        const tx = { date, category, note, amount: amountRaw };
+        pocketState.transactions.push(tx);
+        pocketState.spent += amountRaw;
+        document.getElementById('tx-amount').value = '';
+        document.getElementById('tx-note').value = '';
+        renderPocketTracker();
+        savePocketState();
+    });
+
+    function renderPocketTracker() {
+        const budget = pocketState.budget || 0;
+        const spent = pocketState.spent || 0;
+        const remaining = budget - spent;
+
+        document.getElementById('tracker-budget').textContent = formatCZK(budget);
+        document.getElementById('tracker-spent').textContent = formatCZK(spent);
+        document.getElementById('tracker-remaining').textContent = formatCZK(remaining);
+        document.getElementById('tracker-count').textContent = pocketState.transactions.length.toString();
+
+        const card = document.getElementById('tracker-remaining-card');
+        const label = document.getElementById('tracker-status-label');
+        card.classList.remove('positive', 'negative');
+        if (!budget) {
+            label.textContent = 'Čekám na nastavení týdne';
+        } else if (remaining >= 0) {
+            card.classList.add('positive');
+            label.textContent = 'V limitu kapesného';
+        } else {
+            card.classList.add('negative');
+            label.textContent = 'Přečerpal jsi kapesné';
+        }
+
+        const body = document.getElementById('tx-table-body');
+        body.innerHTML = '';
+        if (!pocketState.transactions.length) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 4;
+            td.style.textAlign = 'center';
+            td.style.color = 'var(--text-muted)';
+            td.style.padding = '10px 6px';
+            td.textContent = 'Zatím žádné transakce v aktuálním týdnu.';
+            tr.appendChild(td);
+            body.appendChild(tr);
+        } else {
+            pocketState.transactions.forEach(tx => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td>${tx.category}</td>
+                    <td>${tx.note || '–'}</td>
+                    <td style="text-align:right;">${formatCZK(tx.amount)}</td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+    }
+
+    loadPocketState();
+
+    // ---------- Kalendář ----------
+    function updateCalendarMonthSelectors() {
+        const today = new Date();
+        document.getElementById('cal-month').value = today.getMonth().toString();
+        document.getElementById('cal-year').value = today.getFullYear().toString();
+    }
+    updateCalendarMonthSelectors();
+
+    document.getElementById('cal-month').addEventListener('change', renderCalendar);
+    document.getElementById('cal-year').addEventListener('change', renderCalendar);
+    document.getElementById('btn-cal-today').addEventListener('click', () => {
+        updateCalendarMonthSelectors();
+        renderCalendar();
+    });
+
+    function renderCalendar() {
+        const month = parseInt(document.getElementById('cal-month').value, 10) || 0;
+        const year = parseInt(document.getElementById('cal-year').value, 10) || (new Date()).getFullYear();
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+
+        const firstDay = new Date(year, month, 1);
+        const firstDayIndexSunday = firstDay.getDay(); // 0=Ne
+        const firstDayIndexMonday = (firstDayIndexSunday + 6) % 7; // 0=Po
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const weeklyLimit = currentStats.leftAfterSavingsMonthly / 4.345 || 0;
+        const weekdayDaily = weeklyLimit / 7.2; // 5 pracovních, 2 víkendové *1.1
+        const weekendDaily = weekdayDaily * 1.1;
+
+        for (let i = 0; i < firstDayIndexMonday; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell empty';
+            grid.appendChild(cell);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dowSunday = date.getDay();
+            const isWeekend = (dowSunday === 0 || dowSunday === 6);
+            const cell = document.createElement('div');
+            cell.className = 'day-cell' + (isWeekend ? ' weekend' : '');
+            const amount = isWeekend ? weekendDaily : weekdayDaily;
+
+            cell.innerHTML = `
+                <div class="day-cell-header">
+                    <div class="day-number">${day}</div>
+                    <div class="day-type-badge">${isWeekend ? 'Víkend' : 'Pracovní den'}</div>
+                </div>
+                <div class="day-amount">${formatCZK(amount || 0)}</div>
+            `;
+            grid.appendChild(cell);
+        }
+    }
+
+    // ---------- Statistiky – Chart.js ----------
+    let mainChart = null;
+    const chartCtx = document.getElementById('main-chart').getContext('2d');
+
+    let currentStats = {
+        incomeMonthly: 0,
+        expenseMonthly: 0,
+        savingsMonthly: 0,
+        leftAfterSavingsMonthly: 0,
+        pocketMonthly: 0,
+        pocketWeekly: 0,
+        pocketDaily: 0
+    };
+
+    function buildChartData(scaleMode, chartMode) {
+        const labels = scaleMode === 'year'
+            ? ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec']
+            : ['Měsíc'];
+
+        const factor = scaleMode === 'year' ? 12 : 1;
+        const income = currentStats.incomeMonthly * factor;
+        const expenses = currentStats.expenseMonthly * factor;
+        const savings = currentStats.savingsMonthly * factor;
+        const left = currentStats.leftAfterSavingsMonthly * factor;
+
+        const incomeData = labels.map(() => income);
+        const expenseData = labels.map(() => expenses);
+        const savingData = labels.map(() => savings);
+        const leftData = labels.map(() => left);
+
+        const datasets = [];
+
+        if (chartMode === 'combined' || chartMode === 'bar') {
+            datasets.push({
+                type: 'bar',
+                label: 'Příjem',
+                data: incomeData,
+                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                borderRadius: 6
+            });
+        }
+        if (chartMode === 'combined' || chartMode === 'line') {
+            datasets.push({
+                type: chartMode === 'line' ? 'line' : 'line',
+                label: 'Výdaje',
+                data: expenseData,
+                borderColor: 'rgba(248, 113, 113, 0.95)',
+                backgroundColor: 'rgba(248, 113, 113, 0.3)',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3
+            });
+            datasets.push({
+                type: chartMode === 'line' ? 'line' : 'line',
+                label: 'Spoření',
+                data: savingData,
+                borderColor: 'rgba(234, 179, 8, 0.95)',
+                backgroundColor: 'rgba(234, 179, 8, 0.25)',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3
+            });
+            datasets.push({
+                type: chartMode === 'line' ? 'line' : 'line',
+                label: 'Zbývá',
+                data: leftData,
+                borderColor: 'rgba(96, 165, 250, 0.95)',
+                backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3
+            });
+        }
+
+        return { labels, datasets };
+    }
+
+    function updateChart() {
+        const scaleMode = document.getElementById('chart-scale').value || 'month';
+        const chartMode = document.getElementById('chart-type').value || 'combined';
+        const data = buildChartData(scaleMode, chartMode);
+
+        if (mainChart) {
+            mainChart.data.labels = data.labels;
+            mainChart.data.datasets = data.datasets;
+            mainChart.update();
+            return;
+        }
+
+        mainChart = new Chart(chartCtx, {
+            type: 'bar',
+            data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#e5e7eb',
+                            boxWidth: 16,
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${formatCZK(ctx.parsed.y || 0)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af', maxRotation: 0 },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#9ca3af',
+                            callback: value => formatCZK(value)
+                        },
+                        grid: {
+                            color: 'rgba(30, 64, 175, 0.35)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    document.getElementById('chart-type').addEventListener('change', updateChart);
+    document.getElementById('chart-scale').addEventListener('change', updateChart);
+
+    // ---------- Přepočet plánu ----------
+    function recalcAll() {
+        // Incomes
+        let incomeMonthly = 0;
+        let incomeCount = 0;
+        const incomeRows = document.querySelectorAll('.income-row');
+        incomeRows.forEach(row => {
+            const freq = row.querySelector('.income-frequency').value;
+            const amount = parseNumber(row.querySelector('.income-amount').value);
+            if (!amount) return;
+            const factor = FREQUENCY_FACTORS[freq] || 1;
+            incomeMonthly += amount * factor;
+            incomeCount++;
+        });
+
+        // Expenses
+        let expenseMonthly = 0;
+        let expenseTrvale = 0;
+        let expensePlovouci = 0;
+
+        const expenseRows = document.querySelectorAll('.expense-row');
+        expenseRows.forEach(row => {
+            const freq = row.querySelector('.exp-frequency').value;
+            const type = row.querySelector('.exp-type').value;
+            const amount = parseNumber(row.querySelector('.exp-amount').value);
+            if (!amount) return;
+            const factor = FREQUENCY_FACTORS[freq] || 1;
+            const monthly = amount * factor;
+            expenseMonthly += monthly;
+            if (type === 'trvale') expenseTrvale += monthly;
+            else expensePlovouci += monthly;
+        });
+
+        // Savings
+        let directSavings = parseNumber(document.getElementById('input-custom-savings').value);
+        const maxForSavings = Math.max(0, incomeMonthly - expenseMonthly);
+        if (directSavings > maxForSavings) {
+            directSavings = maxForSavings;
+            if (directSavings) {
+                document.getElementById('input-custom-savings').value = formatNumberCZ(directSavings);
+            }
+        }
+
+        let savingMonthly = directSavings || 0;
+        const savingRows = document.querySelectorAll('.saving-row');
+        savingRows.forEach(row => {
+            const freq = row.querySelector('.save-frequency').value;
+            const amount = parseNumber(row.querySelector('.save-amount').value);
+            if (!amount) return;
+            const factor = FREQUENCY_FACTORS[freq] || 1;
+            savingMonthly += amount * factor;
+        });
+
+        const beforeSavings = incomeMonthly - expenseMonthly;
+        const leftAfterSavings = incomeMonthly - expenseMonthly - savingMonthly;
+
+        // Pocket – from floating expenses
+        const pocketMonthly = expensePlovouci;
+        const pocketWeekly = pocketMonthly / 4.345;
+        const pocketDaily = pocketMonthly / 30.44;
+
+        currentStats.incomeMonthly = incomeMonthly;
+        currentStats.expenseMonthly = expenseMonthly;
+        currentStats.savingsMonthly = savingMonthly;
+        currentStats.leftAfterSavingsMonthly = leftAfterSavings;
+        currentStats.pocketMonthly = pocketMonthly;
+        currentStats.pocketWeekly = pocketWeekly;
+        currentStats.pocketDaily = pocketDaily;
+
+        // Update summary cards
+        const incomeEl = document.getElementById('summary-income');
+        incomeEl.textContent = formatCZK(incomeMonthly);
+        document.getElementById('summary-income-count').textContent =
+            incomeCount ? `${incomeCount} zdroj(e) příjmů` : 'Zatím žádné příjmy.';
+        animateFlash(incomeEl);
+
+        const expEl = document.getElementById('summary-expenses');
+        expEl.textContent = formatCZK(expenseMonthly);
+        document.getElementById('summary-expenses-breakdown').textContent =
+            `Trvalé ${formatCZK(expenseTrvale)} • Plovoucí ${formatCZK(expensePlovouci)}`;
+        animateFlash(expEl);
+
+        const beforeEl = document.getElementById('summary-before-savings');
+        beforeEl.textContent = formatCZK(beforeSavings);
+        const beforePerc = incomeMonthly ? (beforeSavings / incomeMonthly) * 100 : 0;
+        document.getElementById('summary-before-savings-perc').textContent =
+            incomeMonthly ? `Podíl z příjmu: ${beforePerc.toFixed(1)} %` : 'Podíl z příjmu: –';
+        animateFlash(beforeEl);
+
+        const statusCard = document.getElementById('card-status');
+        const statusText = document.getElementById('summary-status-text');
+        const statusPill = document.getElementById('summary-status-pill');
+        statusCard.classList.remove('highlight-positive', 'highlight-negative');
+        statusPill.classList.remove('positive', 'negative');
+
+        if (!incomeMonthly) {
+            statusText.textContent = 'Čekám na vyplnění příjmů';
+            statusPill.querySelector('span:last-child').textContent = 'Zadej aspoň jeden příjem';
+        } else if (beforeSavings < 0) {
+            statusText.textContent = 'Základní plán je v mínusu';
+            statusPill.classList.add('negative');
+            statusCard.classList.add('highlight-negative');
+            statusPill.querySelector('span:last-child').textContent = 'Sniž výdaje nebo přidej příjem';
+        } else {
+            statusText.textContent = 'Základní plán dává smysl';
+            statusPill.classList.add('positive');
+            statusCard.classList.add('highlight-positive');
+            statusPill.querySelector('span:last-child').textContent = 'Můžeš pokračovat ke spoření';
+        }
+
+        // Savings section
+        document.getElementById('summary-max-savings').textContent = formatCZK(maxForSavings);
+        document.getElementById('summary-current-savings').textContent = formatCZK(savingMonthly);
+        const savingPerc = incomeMonthly ? (savingMonthly / incomeMonthly) * 100 : 0;
+        document.getElementById('summary-current-savings-perc').textContent =
+            incomeMonthly ? `Podíl z příjmu: ${savingPerc.toFixed(1)} %` : 'Podíl z příjmu: –';
+        document.getElementById('summary-after-savings').textContent = formatCZK(leftAfterSavings);
+        const afterPerc = incomeMonthly ? (leftAfterSavings / incomeMonthly) * 100 : 0;
+        document.getElementById('summary-after-savings-perc').textContent =
+            incomeMonthly ? `Zůstává na život: ${afterPerc.toFixed(1)} %` : 'Zůstává na život: –';
+
+        document.getElementById('summary-custom-savings-perc').textContent =
+            incomeMonthly ? `${((directSavings || 0) / incomeMonthly * 100).toFixed(1)} %` : '–';
+        document.getElementById('summary-after-custom-savings').textContent = formatCZK(incomeMonthly - expenseMonthly - (directSavings || 0));
+
+        const savingsStatus = document.getElementById('summary-savings-status');
+        if (savingMonthly === 0) {
+            savingsStatus.textContent = 'Spoření zatím nenastaveno';
+        } else if (savingPerc < 5) {
+            savingsStatus.textContent = 'Spoříš spíše opatrně – pod 5 %';
+        } else if (savingPerc <= 20) {
+            savingsStatus.textContent = 'Spoříš zdravým tempem';
+        } else {
+            savingsStatus.textContent = 'Velmi ambiciózní spoření – zkontroluj si, že zbyde na život';
+        }
+
+        document.getElementById('summary-max-savings').parentElement && animateFlash(document.getElementById('summary-max-savings'));
+        animateFlash(document.getElementById('summary-current-savings'));
+        animateFlash(document.getElementById('summary-after-savings'));
+
+        // Pocket section
+        document.getElementById('pocket-monthly').textContent = formatCZK(pocketMonthly);
+        document.getElementById('pocket-monthly-share').textContent =
+            incomeMonthly ? `Podíl z příjmu: ${(pocketMonthly / incomeMonthly * 100).toFixed(1)} %` : 'Podíl z příjmu: –';
+        document.getElementById('pocket-weekly').textContent = formatCZK(pocketWeekly);
+        document.getElementById('pocket-daily').textContent = formatCZK(pocketDaily);
+        document.getElementById('pocket-next-budget').textContent = formatCZK(pocketWeekly);
+        animateFlash(document.getElementById('pocket-monthly'));
+        animateFlash(document.getElementById('pocket-weekly'));
+        animateFlash(document.getElementById('pocket-daily'));
+
+        // Calendar summary
+        document.getElementById('cal-left-month').textContent = formatCZK(leftAfterSavings);
+        const vecky = leftAfterSavings / 4.345;
+        const wDaily = vecky / 7.2;
+        const weDaily = wDaily * 1.1;
+        document.getElementById('cal-week-limit').textContent = formatCZK(vecky);
+        document.getElementById('cal-workday').textContent = formatCZK(wDaily);
+        document.getElementById('cal-weekend').textContent = formatCZK(weDaily);
+        animateFlash(document.getElementById('cal-left-month'));
+        animateFlash(document.getElementById('cal-week-limit'));
+
+        // Update breakdown table
+        renderBreakdownTable(incomeMonthly, expenseMonthly, savingMonthly, leftAfterSavings, expenseRows, savingRows);
+
+        // Update chart
+        updateChart();
+
+        // Update tracker suggestions if no budget yet
+        if (!(pocketState.budget > 0) && pocketWeekly > 0) {
+            pocketState.budget = pocketWeekly;
+            renderPocketTracker();
+            savePocketState();
+        }
+
+        // Re-render calendar with new limits
+        renderCalendar();
+    }
+
+    function renderBreakdownTable(incomeMonthly, expenseMonthly, savingMonthly, leftAfterSavings, expenseRows, savingRows) {
+        const tbody = document.getElementById('breakdown-table-body');
+        tbody.innerHTML = '';
+
+        function addRow(name, freq, type, unitAmount, monthlyAmount, share, rowClass) {
+            const tr = document.createElement('tr');
+            if (rowClass) tr.classList.add(rowClass);
+            tr.innerHTML = `
+                <td>${name}</td>
+                <td>${freq}</td>
+                <td>${type}</td>
+                <td>${unitAmount}</td>
+                <td>${formatCZK(monthlyAmount)}</td>
+                <td>${share}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        if (!incomeMonthly && !expenseMonthly && !savingMonthly) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 6;
+            td.style.textAlign = 'center';
+            td.style.color = 'var(--text-muted)';
+            td.style.padding = '10px 6px';
+            td.textContent = 'Zatím žádná data – nejdřív spusť výpočet.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
+
+        const incomeShare = '100,0 %';
+        addRow('Příjem (součet)', 'měsíčně', '–', '–', incomeMonthly, incomeShare, 'row-income');
+
+        addRow('Výdaje celkem', 'měsíčně', '–', '–', expenseMonthly,
+            incomeMonthly ? (expenseMonthly / incomeMonthly * 100).toFixed(1) + ' %' : '–',
+            'row-expense');
+
+        addRow('Spoření celkem', 'měsíčně', '–', '–', savingMonthly,
+            incomeMonthly ? (savingMonthly / incomeMonthly * 100).toFixed(1) + ' %' : '–',
+            'row-saving');
+
+        const leftShare = incomeMonthly ? (leftAfterSavings / incomeMonthly * 100).toFixed(1) + ' %' : '–';
+        addRow('Zbývá po spoření', 'měsíčně', '–', '–', leftAfterSavings, leftShare, 'row-remaining');
+
+        if (expenseRows && expenseRows.length) {
+            expenseRows.forEach(row => {
+                const name = row.querySelector('.exp-name').value || 'Výdaj';
+                const freqCode = row.querySelector('.exp-frequency').value;
+                const typeCode = row.querySelector('.exp-type').value;
+                const freqText = row.querySelector('.exp-frequency').selectedOptions[0].textContent;
+                const typeText = typeCode === 'trvale' ? 'Trvalé' : 'Plovoucí';
+                const unitAmount = parseNumber(row.querySelector('.exp-amount').value);
+                if (!unitAmount) return;
+                const factor = FREQUENCY_FACTORS[freqCode] || 1;
+                const monthly = unitAmount * factor;
+                const share = incomeMonthly ? (monthly / incomeMonthly * 100).toFixed(1) + ' %' : '–';
+                const cls = typeCode === 'trvale' ? 'row-expense' : '';
+                addRow(name, freqText, typeText, formatCZK(unitAmount), monthly, share, cls);
+            });
+        }
+
+        if (savingRows && savingRows.length) {
+            savingRows.forEach(row => {
+                const name = row.querySelector('.save-name').value || 'Spoření';
+                const freqCode = row.querySelector('.save-frequency').value;
+                const freqText = row.querySelector('.save-frequency').selectedOptions[0].textContent;
+                const unitAmount = parseNumber(row.querySelector('.save-amount').value);
+                if (!unitAmount) return;
+                const factor = FREQUENCY_FACTORS[freqCode] || 1;
+                const monthly = unitAmount * factor;
+                const share = incomeMonthly ? (monthly / incomeMonthly * 100).toFixed(1) + ' %' : '–';
+                addRow(name, freqText, 'Spoření', formatCZK(unitAmount), monthly, share, 'row-saving');
+            });
+        }
+    }
+
+    // ---------- Navigace – scroll na sekce ----------
+    document.querySelectorAll('.nav-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.scrollTo;
+            const target = document.getElementById(targetId);
+            if (target) {
+                window.scrollTo({
+                    top: target.getBoundingClientRect().top + window.scrollY - 12,
+                    behavior: 'smooth'
+                });
+            }
+            document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // ---------- Floating button ----------
+    document.getElementById('btn-recalc-floating').addEventListener('click', () => {
+        recalcAll();
+    });
+
+    // Spustit první výpočet po načtení
+    window.addEventListener('load', () => {
+        recalcAll();
+        renderCalendar();
+    });
+</script>
+</body>
+</html>
